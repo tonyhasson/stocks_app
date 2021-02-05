@@ -4,7 +4,7 @@ import pandas as pd
 import datetime
 import matplotlib.pyplot as plt
 import yfinance as yf
-
+import os
 today=datetime.date.today()
 
 ##functions
@@ -24,7 +24,7 @@ def create_server_connection(host_name, user_name, user_password,database_name):
             passwd=user_password,
             database=database_name
         )
-        print("MySQL Database connection successful")
+        #print("MySQL Database connection successful")
     except Error as err:
         print(f"Error: '{err}'")
 
@@ -41,7 +41,7 @@ def create_database(connection, query):
     cursor = connection.cursor()
     try:
         cursor.execute(query)
-        print("Database created successfully")
+        #print("Database created successfully")
     except Error as err:
         print(f"Error: '{err}'")
 
@@ -53,7 +53,7 @@ def execute_query(connection, query):
     try:
         cursor.execute(query)
         connection.commit()
-        print("Query successful")
+        #print("Query successful")
     except Error as err:
         print(f"Error: '{err}'")
 
@@ -67,6 +67,9 @@ def read_query(connection, query):
         return result
     except Error as err:
         print(f"Error: '{err}'")
+
+
+
 
 def input_daily_data(user_name):
     ##getting data about stock name,price and amount.
@@ -97,12 +100,19 @@ def input_daily_data(user_name):
             tickerData = yf.Ticker(stock_name)
             x = tickerData.history(period='1s')
             if not x.empty:
-                stock_price.append(x['Close'][1])
+                current_hour = datetime.datetime.now().hour
+                if current_hour < 16:
+                    stock_price.append(x['Close'][1])
+                else:
+                    stock_price.append(x['Close'][0])
             if x.empty:
                 stock_price.append(df['stock_price'][i])
             total_price += stock_price[i] * stock_amount
 
         i += 1
+
+
+
     i=0
     ##creating sql strings and inputing the data back to the databases
     while i < len(arr):
@@ -120,12 +130,38 @@ def input_daily_data(user_name):
     string_truncate="TRUNCATE `stock_db`.`stock_data_"+user_name+"`;"
     connection = create_server_connection("127.0.0.1", "tony", "tonton12", "stock_db")
     execute_query(connection, string_truncate) ##deleting the old data
-    execute_query(connection, string_for_sql)  ##updating the new data
+    execute_query(connection, string_for_sql)  ##inserting the new data
     string_total="""INSERT INTO stock_total_"""+user_name+""" VALUES('"""+str(today)+"""' , """+str(total_price)+""");"""
-    execute_query(connection, string_total)  ##updating the total price
+    execute_query(connection, string_total)  ##inserting the new total price
+
+
+     ##creating pie chart
+    fig1, ax1 = plt.subplots()
+    text = "total dollars invested: " + str(total_price) + ""
+    plt.title(text, fontdict=None, loc='center', pad=None)
+    ax1.pie(percents, labels=df['stock_name'], autopct='%1.1f%%',
+            shadow=True, startangle=90)
+    ax1.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
+
+
+
+    pie_path = r'C:\Users\tonyh\OneDrive\Desktop\מניות\portfolio photos'
+    pie_path+="\\"
+    pie_path+=user_name
+
+    ##creates folder if doesn't exist
+    if not os.path.exists(pie_path):
+           os.makedirs(pie_path)
+
+
+    pie_path += "\\"
+    pie_path += str(today)
+    pie_path+=".png"
+    plt.savefig(pie_path, bbox_inches='tight')
+
 def main():
     q1 = """
-        SELECT idUser_Names,Name FROM stock_db.user_names;   
+        SELECT idUser_Names,Name,automate FROM stock_db.user_names;   
         """
 
     connection = create_server_connection("127.0.0.1", "tony", "tonton12", "stock_db")
@@ -134,26 +170,18 @@ def main():
     for result in results:
         result = result
         arr.append(result)
-    columns = ["id", "Name"]
+    columns = ["id", "Name","Auto"]
     df = pd.DataFrame(arr, columns=columns)
     i = 0
     while i < len(arr):
-        input_daily_data(df["Name"][i])
+        if df["Auto"][i]==1:
+            input_daily_data(df["Name"][i])
         i += 1
 
 
 
 
-#string="""INSERT INTO stock_data VALUES('"""+str(today)+"""' ,'tsla',2.168765, 846.6400146484375, 10.540399775143548),
-#('"""+str(today)+"""' ,'msft',4.227177, 225.9499969482422, 5.482877833693618),('"""+str(today)+"""' ,'fb',3.496403, 274.5,
-#5.509467550653445),('"""+str(today)+"""' ,'googl',1.246987, 1892.56005859375, 13.547444882800088),('"""+str(today)+"""' ,'dis',11.337674,
-#172.77999877929688, 11.245097580014473),('"""+str(today)+"""' ,'qqq',2.561224, 325.4200134277344, 4.784511666942775),
-#('"""+str(today)+"""' ,'cgc',11.0, 33.79999923706055, 2.134298563977845),('"""+str(today)+"""' ,'baba',7.0, 258.6199951171875,
-#10.392162658893206),('"""+str(today)+"""' ,'v',4.0, 202.02000427246094, 4.638741417385458),('"""+str(today)+"""' ,'hexo',42.0,
-#6.690000057220459, 1.6129511274131048),('"""+str(today)+"""' ,'arkk',6.0, 146.0800018310547, 5.031388033965828),('"""+str(today)+"""' ,
-#'tan',15.0, 120.97000122070312, 10.416330246808755),('"""+str(today)+"""' ,'nadlan',4.99, 244.673, 7.008617991430818),
-#('"""+str(today)+"""' ,'electreon',7.0, 83.49, 3.3548900965597905),('"""+str(today)+"""' ,'voo',2.129052, 351.8999938964844,
-#4.300820574317238); """
+
 
 #connection = create_server_connection("127.0.0.1", "tony", "tonton12","stock_db")
 #execute_query(connection, string)
@@ -181,6 +209,5 @@ def main():
 
 
 main()
-
 
 
