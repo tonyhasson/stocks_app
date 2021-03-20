@@ -5,6 +5,7 @@ stocks.py-I can use this program to create a new stocks portfolio,see a pie grap
 
 
 
+
 stock_automated_data.py-this program updates automaticly the stock prices in the portfolios of user that are signed to the program.
 
 
@@ -12,3 +13,11 @@ stock_automated_data.py-this program updates automaticly the stock prices in the
 scrap_all_stocks.py-used for a diffrent app that i'm building,this program is scraping the data of all the stock exchanges that I choose in advance.
 
 
+
+
+
+view of stocks.py:
+
+
+
+https://user-images.githubusercontent.com/63504193/111884940-67efc580-89cd-11eb-89e8-8b539adfc404.mp4
