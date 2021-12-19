@@ -6,7 +6,8 @@ stocks.py-I can use this program to create a new stocks portfolio,see a pie grap
 
 
 
-stock_automated_data.py-this program updates automaticly the stock prices in the portfolios of user that are signed to the program.
+stock_automated_data.py-this program updates automaticly the stock prices in the portfolios of user that are signed to the program and adds a screenshot of todays portfolio to 
+the user's private folder.
 
 
 
