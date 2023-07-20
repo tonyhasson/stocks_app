@@ -5,6 +5,9 @@ import datetime
 import matplotlib.pyplot as plt
 import yfinance as yf
 import os
+from tqdm import tqdm
+import requests,bs4,re
+from requests.packages.urllib3.util.retry import Retry
 today=datetime.date.today()
 
 ##functions
@@ -69,9 +72,83 @@ def read_query(connection, query):
         print(f"Error: '{err}'")
 
 
+##specific scrapping for a stock that doesn't appear in yahoo finance
+def nadlan_price():
+
+    ##getting USD to ILS ratio
+
+    url = 'https://www.xe.com/currencyconverter/convert/?Amount=1&From=USD&To=ILS'
+    req=requests.get(url)
+    soup = bs4.BeautifulSoup(req.text, 'html.parser')
+    # get dollar to shekel ratio
+    data_dollar=soup.find("p",attrs={"class":"result__BigRate-sc-1bsijpp-1 iGrAod"})
+
+    # clean text and cast to float
+    without=re.compile('[^0-9.]')
+    x=without.sub('',data_dollar.text)
+    data_dollar=float(x)
+
+    ##getting nadlan price
+
+    ##this website changes the classes names every day
+
+    # url="https://finance.themarker.com/etf/1148964"
+    # req=requests.get(url)
+    # soup = bs4.BeautifulSoup(req.text, 'html.parser')
+    # # get nadlan stock price
+    # data_nadlan=soup.find("span",attrs={"class":"ls ax lt kr fn lu lv"})
+    # # clean text and cast to float
+    # without=re.compile(',')
+    # x=without.sub('',data_nadlan.text)
+    # x=float(x)
+
+    ##fixing SSL problem
+    requests.packages.urllib3.disable_warnings()
+    requests.packages.urllib3.util.ssl_.DEFAULT_CIPHERS += ':HIGH:!DH:!aNULL'
+    try:
+        requests.packages.urllib3.contrib.pyopenssl.util.ssl_.DEFAULT_CIPHERS += ':HIGH:!DH:!aNULL'
+    except AttributeError:
+        # no pyopenssl support used / needed / available
+        pass
+
+    url = "https://finance.sponser.co.il/finance/etf/?s=6"
+    req = requests.get(url, verify=False)
+    soup = bs4.BeautifulSoup(req.text, 'html.parser')
+
+    table = soup.find("table", attrs={"id": "portfolioTable"})  # Grab the first table
+
+    previous = ""
+    now = ""
+    found = False
+    for tr in table.find_all("tr"):
+        if not found:
+            for td in tr:
+                if not found:
+                    for i in td:
+                        if not found:
+                            for x in i:
+                                if x == "\n":
+                                    continue
+                                previous = now
+                                now = x
+                                if previous == """הראל סל ת"א נדל"ן""":
+                                    found = True
+                                    break
+
+    x = without.sub('', now)
+    x = float(x)
+
+
+    return x/data_dollar
+
+
 
 
 def input_daily_data(user_name):
+
+    print("\nNow Updating %s's data\n"%(user_name))
+
+
     ##getting data about stock name,price and amount.
     q1 = """
     SELECT Stock_Name,Stock_Amount,Stock_Price FROM stock_db.stock_data_"""+user_name+""";   
@@ -87,29 +164,43 @@ def input_daily_data(user_name):
     df = pd.DataFrame(arr, columns=columns)
 
 
-    i = 0
+
     stock_price = []
     total_price = 0
     percents = []
     string_for_sql = "INSERT INTO stock_data_"+user_name+" VALUES"
     ##creating new total price and updating prices
-    while i < len(arr):
+
+
+    for i in tqdm(range(len(arr)),desc="loading..."):##tqdm is for the loading bar
+
         stock_name = df['stock_name'][i]
         stock_amount = df['stock_amount'][i]
         if stock_amount > 0:
             tickerData = yf.Ticker(stock_name)
             x = tickerData.history(period='1s')
             if not x.empty:
-                current_hour = datetime.datetime.now().hour
-                if current_hour < 16:
+                #current_hour = datetime.datetime.now().hour
+                #if current_hour < 16:
+                #    stock_price.append(x['Close'][1])
+                #else:
+                #     stock_price.append(x['Close'][0])
+                try:
                     stock_price.append(x['Close'][1])
-                else:
+                except IndexError:
                     stock_price.append(x['Close'][0])
             if x.empty:
-                stock_price.append(df['stock_price'][i])
+                if stock_name=="nadlan":
+                    try:
+                        stock_price.append(nadlan_price())
+                    except:
+                        print("error in scrapping nadlan price/dollar price")
+                        stock_price.append(df['stock_price'][i])
+                else:
+                    stock_price.append(df['stock_price'][i])
             total_price += stock_price[i] * stock_amount
 
-        i += 1
+
 
 
 
@@ -148,6 +239,8 @@ def input_daily_data(user_name):
     pie_path = r'C:\Users\tonyh\OneDrive\Desktop\מניות\portfolio photos'
     pie_path+="\\"
     pie_path+=user_name
+    pie_path += "\\"
+    pie_path += str(today.year)
 
     ##creates folder if doesn't exist
     if not os.path.exists(pie_path):
@@ -158,6 +251,7 @@ def input_daily_data(user_name):
     pie_path += str(today)
     pie_path+=".png"
     plt.savefig(pie_path, bbox_inches='tight')
+
 
 def main():
     q1 = """
@@ -175,6 +269,7 @@ def main():
     i = 0
     while i < len(arr):
         if df["Auto"][i]==1:
+
             input_daily_data(df["Name"][i])
         i += 1
 
@@ -209,5 +304,9 @@ def main():
 
 
 main()
+
+
+
+
 
 
