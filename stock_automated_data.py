@@ -7,6 +7,7 @@ import yfinance as yf
 import os
 from tqdm import tqdm
 import requests,bs4,re
+from curl_cffi import requests
 from requests.packages.urllib3.util.retry import Retry
 today=datetime.date.today()
 
@@ -177,8 +178,9 @@ def input_daily_data(user_name):
         stock_name = df['stock_name'][i]
         stock_amount = df['stock_amount'][i]
         if stock_amount > 0:
-            tickerData = yf.Ticker(stock_name)
-            x = tickerData.history(period='1s')
+            session = requests.Session(impersonate="chrome")
+            tickerData = yf.Ticker(stock_name,session=session)
+            x = tickerData.history(period='1d')
             if not x.empty:
                 #current_hour = datetime.datetime.now().hour
                 #if current_hour < 16:
