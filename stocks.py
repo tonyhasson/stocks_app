@@ -14,6 +14,7 @@ import sys
 import mysql.connector
 from mysql.connector import Error
 import datetime
+from curl_cffi import requests
 
 
 
@@ -155,90 +156,91 @@ def messagebox(text):
 ##functions:
 
 ##not used anymore
-def create_stock_portfolio():
-    q1 = """
-            SELECT idUser_Names,Name,automate,portfolio FROM stock_db.user_names;   
-            """
 
-    connection = create_server_connection("127.0.0.1", "tony", "tonton12", "stock_db")
-    results = read_query(connection, q1)
-    arr = []
-    for result in results:
-        result = result
-        arr.append(result)
-    columns = ["id", "Name", "Auto","portfolio"]
-    df = pd.DataFrame(arr, columns=columns)
-    if df["portfolio"][id_global] == 0:
-        create_table_data = """
-                 CREATE TABLE stock_data_""" + name + """ (
-                 `stock_date` DATETIME NOT NULL,
-                 `stock_name` VARCHAR(45) NOT NULL,
-                 `stock_amount` DOUBLE NOT NULL,
-                 `stock_price` DOUBLE NOT NULL,
-                 `stock_percent` DOUBLE NOT NULL)
-                 ENGINE = InnoDB;
-                 """
-        create_table_total = """
-                     CREATE TABLE stock_total_""" + name + """ (
-                     `stock_date` DATETIME NOT NULL,
-                     `stock_total` DOUBLE NOT NULL)
-                     ENGINE = CSV;
-                     """
-
-        input_data_to_table = "INSERT INTO stock_data_" + name + " VALUES"
-        execute_query(connection, create_table_data)
-        execute_query(connection, create_table_total)
-        i = 0
-        total_price = 0
-        a = []
-        amount_of_stocks = int(input("enter amount of stocks you want to enter: "))
-
-        while i < amount_of_stocks:
-            stock_name = input("enter a stock exact ticker(if the stock is international,if not enter 0): ")
-            if stock_name != '0':
-                tickerData = yf.Ticker(stock_name)
-                x = tickerData.history(period='1s')
-                stock_price = x['Close'][1]
-            else:
-                stock_name = input("enter israeli stock name: ")
-                stock_price = float(input("enter a stock price: "))
-
-            stock_amount = float(input("enter amount of stocks owned: "))
-            total_price += stock_price * stock_amount
-            new_stock = stock(stock_name, stock_price, stock_amount)
-            a.append(new_stock)
-            if i < amount_of_stocks - 1:
-                print("new stock ")
-            i += 1
-
-        print("total price is :" + str(total_price) + "")
-
-        i = 0
-        while i < amount_of_stocks:
-            a[i].percent = float((a[i].price * a[i].amount * 100) / total_price)
-            temp_name = "'"
-            temp_name += str(a[i].name)
-            temp_name += "'"
-            input_data_to_table += """('""" + str(today) + """'  , """ + temp_name + """ , """ + str(
-                a[i].amount) + """ ,  """ + str(
-                a[i].price) + """ ,  """ + str(a[i].percent) + """ )"""
-            if i < amount_of_stocks - 1:
-                input_data_to_table += ","
-            print("name:" + str(a[i].name) + "   price: " + str(a[i].price) + "   amount: " + str(
-                a[i].amount) + "  percent: " + str(a[i].percent) + "%")
-            i += 1
-
-        input_data_to_table += ";"
-        str_portfolio = """UPDATE `stock_db`.`user_names` SET `portfolio` = '1' WHERE (`Name` = '""" + name + """');"""
-        string_total = """INSERT INTO stock_total_""" + name + """ VALUES('""" + str(today) + """' , """ + str(
-            total_price) + """);"""
-        execute_query(connection, string_total)  ##updating the total price
-        execute_query(connection, input_data_to_table)  ##updating stock data
-        execute_query(connection, str_portfolio)  ##updating portfolio created(turn 0 to 1)
-
-
-    elif df["portfolio"][id_global] == 1:
-        print("portfolio already created!")
+# def create_stock_portfolio():
+#     q1 = """
+#             SELECT idUser_Names,Name,automate,portfolio FROM stock_db.user_names;
+#             """
+#
+#     connection = create_server_connection("127.0.0.1", "tony", "tonton12", "stock_db")
+#     results = read_query(connection, q1)
+#     arr = []
+#     for result in results:
+#         result = result
+#         arr.append(result)
+#     columns = ["id", "Name", "Auto","portfolio"]
+#     df = pd.DataFrame(arr, columns=columns)
+#     if df["portfolio"][id_global] == 0:
+#         create_table_data = """
+#                  CREATE TABLE stock_data_""" + name + """ (
+#                  `stock_date` DATETIME NOT NULL,
+#                  `stock_name` VARCHAR(45) NOT NULL,
+#                  `stock_amount` DOUBLE NOT NULL,
+#                  `stock_price` DOUBLE NOT NULL,
+#                  `stock_percent` DOUBLE NOT NULL)
+#                  ENGINE = InnoDB;
+#                  """
+#         create_table_total = """
+#                      CREATE TABLE stock_total_""" + name + """ (
+#                      `stock_date` DATETIME NOT NULL,
+#                      `stock_total` DOUBLE NOT NULL)
+#                      ENGINE = CSV;
+#                      """
+#
+#         input_data_to_table = "INSERT INTO stock_data_" + name + " VALUES"
+#         execute_query(connection, create_table_data)
+#         execute_query(connection, create_table_total)
+#         i = 0
+#         total_price = 0
+#         a = []
+#         amount_of_stocks = int(input("enter amount of stocks you want to enter: "))
+#
+#         while i < amount_of_stocks:
+#             stock_name = input("enter a stock exact ticker(if the stock is international,if not enter 0): ")
+#             if stock_name != '0':
+#                 tickerData = yf.Ticker(stock_name)
+#                 x = tickerData.history(period='1d')
+#                 stock_price = x['Close'][1]
+#             else:
+#                 stock_name = input("enter israeli stock name: ")
+#                 stock_price = float(input("enter a stock price: "))
+#
+#             stock_amount = float(input("enter amount of stocks owned: "))
+#             total_price += stock_price * stock_amount
+#             new_stock = stock(stock_name, stock_price, stock_amount)
+#             a.append(new_stock)
+#             if i < amount_of_stocks - 1:
+#                 print("new stock ")
+#             i += 1
+#
+#         print("total price is :" + str(total_price) + "")
+#
+#         i = 0
+#         while i < amount_of_stocks:
+#             a[i].percent = float((a[i].price * a[i].amount * 100) / total_price)
+#             temp_name = "'"
+#             temp_name += str(a[i].name)
+#             temp_name += "'"
+#             input_data_to_table += """('""" + str(today) + """'  , """ + temp_name + """ , """ + str(
+#                 a[i].amount) + """ ,  """ + str(
+#                 a[i].price) + """ ,  """ + str(a[i].percent) + """ )"""
+#             if i < amount_of_stocks - 1:
+#                 input_data_to_table += ","
+#             print("name:" + str(a[i].name) + "   price: " + str(a[i].price) + "   amount: " + str(
+#                 a[i].amount) + "  percent: " + str(a[i].percent) + "%")
+#             i += 1
+#
+#         input_data_to_table += ";"
+#         str_portfolio = """UPDATE `stock_db`.`user_names` SET `portfolio` = '1' WHERE (`Name` = '""" + name + """');"""
+#         string_total = """INSERT INTO stock_total_""" + name + """ VALUES('""" + str(today) + """' , """ + str(
+#             total_price) + """);"""
+#         execute_query(connection, string_total)  ##updating the total price
+#         execute_query(connection, input_data_to_table)  ##updating stock data
+#         execute_query(connection, str_portfolio)  ##updating portfolio created(turn 0 to 1)
+#
+#
+#     elif df["portfolio"][id_global] == 1:
+#         print("portfolio already created!")
 
 
 
@@ -366,8 +368,9 @@ def show_stk_prtlfo():
         while i < len(arr_data):
             stock_name = df['stock_name'][i]
             stock_amount = df['stock_amount'][i]
-            tickerData = yf.Ticker(stock_name)
-            x = tickerData.history(period='1s')
+            session = requests.Session(impersonate="chrome")
+            tickerData = yf.Ticker(stock_name,session=session)
+            x = tickerData.history(period='1d')
 
             if not x.empty:
                  try:
@@ -492,147 +495,6 @@ def init_update():
 
 
 
-def old_update_amount():
-    q1 = """
-                                  SELECT idUser_Names,Name,automate,portfolio FROM stock_db.user_names;   
-                                  """
-
-    connection = create_server_connection("127.0.0.1", "tony", "tonton12", "stock_db")
-    results = read_query(connection, q1)
-    arr_user = []
-    for result in results:
-        result = result
-        arr_user.append(result)
-    columns = ["id", "Name", "Auto", "Portfolio"]
-    df = pd.DataFrame(arr_user, columns=columns)
-
-    if df["Portfolio"][id_global] == 1:
-
-                i = 0
-                tmp = -1
-
-                q1 = """
-                                           SELECT Stock_Name,Stock_Amount,Stock_Price FROM stock_db.stock_data_""" + name + """;   
-                                           """
-
-                connection = create_server_connection("127.0.0.1", "tony", "tonton12", "stock_db")
-                results = read_query(connection, q1)
-                arr_data = []
-                for result in results:
-                    result = result
-                    arr_data.append(result)
-                columns = ["stock_name", "stock_amount", "stock_price"]
-                df = pd.DataFrame(arr_data, columns=columns)
-
-
-                if entry_stock_name.get()!='' and entry_amount.get()!='':
-                    stock_name = str(entry_stock_name.get())  ##getting stock name from input
-
-                    try:
-                        input_amount = float(entry_amount.get())
-                        tf=0
-                    except:
-                        tf=1
-                        messagebox("enter valid input amount!")
-                    if tf==0:
-
-                        new_amount=1##initilazing data for last if
-                        if input_amount>0:
-                            while i < len(arr_data):
-                                if df["stock_name"][i] == stock_name:
-                                    tmp = i
-                                i += 1
-
-                            if tmp != -1:
-                                q1="""SELECT stock_amount FROM stock_data_"""+name+"""
-                                                        WHERE stock_name='"""+str(stock_name)+"""';"""
-                                res = (read_query(connection, q1))
-                                old_amount=float(res[0][0])
-                                x = ch.get()
-
-                                if x=="add":
-                                    new_amount = old_amount + input_amount
-                                    string_update_amount = """UPDATE stock_data_""" + name + """
-                                                                    SET
-                                                                    stock_amount = """ + str(new_amount) + """
-                                                                    WHERE stock_name='""" + str(stock_name) + """';
-                                                                    """
-                                    execute_query(connection, string_update_amount)
-                                elif x=="sub":
-                                    new_amount = old_amount - input_amount
-                                    if new_amount<0:
-                                        new_amount=0
-                                    string_update_amount = """UPDATE stock_data_""" + name + """
-                                                                    SET
-                                                                    stock_amount = """ + str(new_amount) + """
-                                                                    WHERE stock_name='""" + str(stock_name) + """';
-                                                                    """
-                                    execute_query(connection, string_update_amount)
-
-                                elif x=="new":
-
-
-                                    string_update_amount = """UPDATE stock_data_""" + name + """
-                                            SET
-                                            stock_amount = """ + str(input_amount) + """
-                                            WHERE stock_name='""" + str(stock_name) + """';
-                                            """
-                                    execute_query(connection, string_update_amount)
-
-
-                                messagebox("amount is updated!")
-                                entry_stock_name.delete(0,"end")
-                                entry_amount.delete(0,"end")
-
-
-
-                            else:  ##stock not in portfolio
-                                tickerData = yf.Ticker(stock_name)
-                                x = tickerData.history(period='1s')
-
-                                if not x.empty:  ##stock is in yahoo finance
-                                    string_new_stock = """INSERT INTO stock_data_""" + str(name) + """ VALUES('""" + str(
-                                        today) + """' ,'""" + str(stock_name) + """',""" + str(input_amount) + """, 0, 0);"""
-                                    execute_query(connection, string_new_stock)
-                                    messagebox("amount is updated!")
-                                    entry_stock_name.delete(0, "end")
-                                    entry_amount.delete(0, "end")
-
-
-
-
-
-                                if x.empty:  ##stock is not in yahoo finance
-                                    messagebox("stock ticker is not in yahoo finance!")
-                                    entry_stock_name.delete(0, "end")
-                                    entry_amount.delete(0, "end")
-
-                        elif input_amount<0:
-                            messagebox("amount can't be negetive!")
-                            entry_stock_name.delete(0, "end")
-                            entry_amount.delete(0, "end")
-
-                        if input_amount == 0 or new_amount==0:
-                            string_d2 = "SET SQL_SAFE_UPDATES = 0;"
-                            string_d3 = """DELETE FROM stock_data_""" + str(name) + """
-                                                   WHERE stock_name='""" + str(stock_name) + """';"""
-                            string_d4 = "SET SQL_SAFE_UPDATES = 1;"
-                            execute_query(connection, string_d2)
-                            execute_query(connection, string_d3)
-                            execute_query(connection, string_d4)
-                            entry_stock_name.delete(0, "end")
-                            entry_amount.delete(0, "end")
-                else:
-                    if entry_amount.get()=='':
-                        messagebox("enter valid input amount!")
-                    if entry_stock_name.get()=='':
-                        messagebox("enter valid stock name!")
-
-
-    else:
-        text="you need to create a stock portfolio first!"
-        messagebox(text)
-
 
 def update_amount():
     q1 = """
@@ -745,8 +607,9 @@ def update_amount():
 
 
                 else:  ##stock not in portfolio
-                    tickerData = yf.Ticker(stock_name)
-                    x = tickerData.history(period='1s')
+                    session = requests.Session(impersonate="chrome")
+                    tickerData = yf.Ticker(stock_name, session=session)
+                    x = tickerData.history(period='1d')
 
                     if not x.empty:  ##stock is in yahoo finance
                         string_new_stock = """INSERT INTO stock_data_""" + str(name) + """ VALUES('""" + str(
@@ -774,6 +637,7 @@ def update_amount():
                 execute_query(connection, string_d2)
                 execute_query(connection, string_d3)
                 execute_query(connection, string_d4)
+                messagebox("amount is updated!")
                 entry_stock_name.delete(0, "end")
                 entry_amount.delete(0, "end")
     else:
@@ -875,12 +739,6 @@ def main_menu():
     label_hello = tk.Label(root, text=string_name)
     label_hello.config(font=('Arial', 20))
     canvas1.create_window(400, 50, window=label_hello)
-
-
-    #button_create_stock_portfolio = tk.Button(root, text='create stock portfolio', command=create_stock_portfolio, bg='lightsteelblue2',
-    #                            font=('Arial', 11, 'bold'))
-    #canvas1.create_window(400, 100, window=button_create_stock_portfolio)
-
 
     button_ftr_st_clc = tk.Button(root, text='future stock calculator', command=ftr_st_clc, bg='lightsteelblue2',
                                 font=('Arial', 11, 'bold'))
