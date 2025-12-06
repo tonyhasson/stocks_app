@@ -120,7 +120,7 @@ def View_Stock_Data_Table():
     tree.pack()
 
 
-    connection = create_server_connection("127.0.0.1", "tony", "tonton12", "stock_db")
+    connection = create_server_connection("127.0.0.1", "root", "tonton12", "stock_db")
     results = read_query(connection, q1)
     for result in results:
         tree.insert("", tk.END, values=result)
@@ -251,7 +251,7 @@ def ftr_st_clc():
                SELECT idUser_Names,Name,automate,portfolio FROM stock_db.user_names;   
                """
 
-    connection = create_server_connection("127.0.0.1", "tony", "tonton12", "stock_db")
+    connection = create_server_connection("127.0.0.1", "root", "tonton12", "stock_db")
     results = read_query(connection, q1)
     arr = []
     for result in results:
@@ -265,7 +265,7 @@ def ftr_st_clc():
                     SELECT stock_total FROM stock_db.stock_total_""" + name + """;   
                     """
 
-        connection = create_server_connection("127.0.0.1", "tony", "tonton12", "stock_db")
+        connection = create_server_connection("127.0.0.1", "root", "tonton12", "stock_db")
         results = read_query(connection, q1)
         arr_data = []
         for result in results:
@@ -333,7 +333,7 @@ def show_stk_prtlfo():
                 SELECT idUser_Names,Name,automate,portfolio FROM stock_db.user_names;   
                 """
 
-    connection = create_server_connection("127.0.0.1", "tony", "tonton12", "stock_db")
+    connection = create_server_connection("127.0.0.1", "root", "tonton12", "stock_db")
     results = read_query(connection, q1)
     arr_user = []
     for result in results:
@@ -347,7 +347,7 @@ def show_stk_prtlfo():
             SELECT Stock_Name,Stock_Amount,Stock_Price FROM stock_db.stock_data_""" + name + """;   
             """
 
-        connection = create_server_connection("127.0.0.1", "tony", "tonton12", "stock_db")
+        connection = create_server_connection("127.0.0.1", "root", "tonton12", "stock_db")
         results = read_query(connection, q1)
         arr_data = []
         for result in results:
@@ -405,7 +405,7 @@ def show_stk_prtlfo():
             i += 1
         string_for_sql += ';'
         string_truncate = "TRUNCATE `stock_db`.`stock_data_" + name + "`;"
-        connection = create_server_connection("127.0.0.1", "tony", "tonton12", "stock_db")
+        connection = create_server_connection("127.0.0.1", "root", "tonton12", "stock_db")
         execute_query(connection, string_truncate)  ##deleting the old data
         execute_query(connection, string_for_sql)  ##updating the new data
         if df_user["Auto"][id_global]==0:
@@ -501,7 +501,7 @@ def update_amount():
                 SELECT idUser_Names,Name,automate,portfolio FROM stock_db.user_names;   
                 """
 
-    connection = create_server_connection("127.0.0.1", "tony", "tonton12", "stock_db")
+    connection = create_server_connection("127.0.0.1", "root", "tonton12", "stock_db")
     results = read_query(connection, q1)
     arr = []
     for result in results:
@@ -538,7 +538,7 @@ def update_amount():
                                                SELECT Stock_Name,Stock_Amount,Stock_Price FROM stock_db.stock_data_""" + name + """;   
                                                """
 
-    connection = create_server_connection("127.0.0.1", "tony", "tonton12", "stock_db")
+    connection = create_server_connection("127.0.0.1", "root", "tonton12", "stock_db")
     results = read_query(connection, q1)
     arr_data = []
     for result in results:
@@ -658,7 +658,7 @@ def auto_func():
             SELECT idUser_Names,Name,automate,portfolio FROM stock_db.user_names;   
             """
 
-    connection = create_server_connection("127.0.0.1", "tony", "tonton12", "stock_db")
+    connection = create_server_connection("127.0.0.1", "root", "tonton12", "stock_db")
     results = read_query(connection, q1)
     arr = []
     for result in results:
@@ -685,7 +685,7 @@ def graph():
                SELECT idUser_Names,Name,automate,portfolio FROM stock_db.user_names;   
                """
 
-    connection = create_server_connection("127.0.0.1", "tony", "tonton12", "stock_db")
+    connection = create_server_connection("127.0.0.1", "root", "tonton12", "stock_db")
     results = read_query(connection, q1)
     arr = []
     for result in results:
@@ -699,7 +699,7 @@ def graph():
                    SELECT stock_date,stock_total FROM stock_db.stock_total_"""+name+""";   
                    """
 
-        connection = create_server_connection("127.0.0.1", "tony", "tonton12", "stock_db")
+        connection = create_server_connection("127.0.0.1", "root", "tonton12", "stock_db")
         results = read_query(connection, q1)
         arr = []
         for result in results:
@@ -835,7 +835,7 @@ def enter_name(): ##logging in user name/creating a new user name
 
 today=datetime.date.today()
 root = tk.Tk()
-connection = create_server_connection("127.0.0.1", "tony", "tonton12", "stock_db")
+connection = create_server_connection("127.0.0.1", "root", "tonton12", "stock_db")
 canvas1 = tk.Canvas(root, width=800, height=600)
 canvas1.pack()
 enter_name()

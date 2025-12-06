@@ -8,7 +8,7 @@ import os
 from tqdm import tqdm
 import requests,bs4,re
 from curl_cffi import requests
-from requests.packages.urllib3.util.retry import Retry
+#from requests.packages.urllib3.util.retry import Retry
 today=datetime.date.today()
 
 ##functions
@@ -155,7 +155,7 @@ def input_daily_data(user_name):
     SELECT Stock_Name,Stock_Amount,Stock_Price FROM stock_db.stock_data_"""+user_name+""";   
     """
 
-    connection = create_server_connection("127.0.0.1", "tony", "tonton12", "stock_db")
+    connection = create_server_connection("127.0.0.1", "root", "tonton12", "stock_db")
     results = read_query(connection, q1)
     arr = []
     for result in results:
@@ -221,7 +221,7 @@ def input_daily_data(user_name):
         i += 1
     string_for_sql += ';'
     string_truncate="TRUNCATE `stock_db`.`stock_data_"+user_name+"`;"
-    connection = create_server_connection("127.0.0.1", "tony", "tonton12", "stock_db")
+    connection = create_server_connection("127.0.0.1", "root", "tonton12", "stock_db")
     execute_query(connection, string_truncate) ##deleting the old data
     execute_query(connection, string_for_sql)  ##inserting the new data
     string_total="""INSERT INTO stock_total_"""+user_name+""" VALUES('"""+str(today)+"""' , """+str(total_price)+""");"""
@@ -238,7 +238,7 @@ def input_daily_data(user_name):
 
 
 
-    pie_path = r'C:\Users\tonyh\OneDrive\Desktop\מניות\portfolio photos'
+    pie_path = r'C:\Users\tonyh\Desktop\stocks_apps\portfolio photos'
     pie_path+="\\"
     pie_path+=user_name
     pie_path += "\\"
@@ -260,7 +260,7 @@ def main():
         SELECT idUser_Names,Name,automate FROM stock_db.user_names;   
         """
 
-    connection = create_server_connection("127.0.0.1", "tony", "tonton12", "stock_db")
+    connection = create_server_connection("127.0.0.1", "root", "tonton12", "stock_db")
     results = read_query(connection, q1)
     arr = []
     for result in results:
